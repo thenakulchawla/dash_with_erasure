@@ -28,6 +28,7 @@ LIBBITCOIN_UTIL=libbitcoin_util.a
 LIBBITCOIN_CRYPTO=crypto/libbitcoin_crypto.a
 LIBBITCOINQT=qt/libbitcoinqt.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
+LIBRAPTOR=libraptor.a
 
 $(LIBSECP256K1): $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
@@ -39,7 +40,8 @@ EXTRA_LIBRARIES += \
   libbitcoin_util.a \
   libbitcoin_common.a \
   libbitcoin_server.a \
-  libbitcoin_cli.a
+  libbitcoin_cli.a \
+  libraptor.a
 if ENABLE_WALLET
 BITCOIN_INCLUDES += $(BDB_CPPFLAGS)
 EXTRA_LIBRARIES += libbitcoin_wallet.a
@@ -70,6 +72,19 @@ endif
 .PHONY: FORCE check-symbols check-security
 # dash core #
 BITCOIN_CORE_H = \
+ libraptor/Utility.h \
+ libraptor/Systematic_Indices.h \
+ libraptor/Degree_Generator.h \
+ libraptor/Triple_Generator.h \
+ libraptor/Array_Data_Types.h \
+ libraptor/Inter_Symbol_Generator.h \
+ libraptor/rfc5053_config.h \
+ libraptor/Partition.h \
+ libraptor/RandNum_Generator.h \
+ libraptor/storage_adaptor.h \
+ libraptor/R10_Encoder.h \
+ libraptor/R10_Decoder.h \
+  libraptor/LT_Encoding.h \
   addrdb.h \
   activemasternode.h \
   addressindex.h \
@@ -211,6 +226,17 @@ libbitcoin_util_a-clientversion.$(OBJEXT): obj/build.h
 libbitcoin_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
 libbitcoin_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libbitcoin_server_a_SOURCES = \
+libraptor/Utility.cpp \
+ libraptor/Systematic_Indices.cpp \
+ libraptor/Degree_Generator.cpp \
+ libraptor/Triple_Generator.cpp \
+ libraptor/Array_Data_Types.cpp \
+ libraptor/Inter_Symbol_Generator.cpp \
+ libraptor/Partition.cpp \
+ libraptor/RandNum_Generator.cpp \
+ libraptor/R10_Encoder.cpp \
+ libraptor/R10_Decoder.cpp \
+  libraptor/LT_Encoding.cpp \
   activemasternode.cpp \
   addrman.cpp \
   addrdb.cpp \

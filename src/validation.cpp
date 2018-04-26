@@ -48,7 +48,22 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/math/distributions/poisson.hpp>
 #include <boost/thread.hpp>
-#include "Jerasure/include/jerasure.h"
+
+// Add libraptor files
+
+#include "libraptor/RandNum_Generator.h"
+#include "libraptor/Degree_Generator.h"
+#include "libraptor/rfc5053_config.h"
+#include "libraptor/Partition.h"
+#include "libraptor/Array_Data_Types.h"
+#include "libraptor/Inter_Symbol_Generator.h"
+#include "libraptor/R10_Decoder.h"
+#include "libraptor/LT_Encoding.h"
+#include "libraptor/Utility.h"
+#include "libraptor/storage_adaptors.h"
+
+//#include "Jerasure/include/galois.h"
+//#include "Jerasure/include/jerasure.h"
 
 
 using namespace std;
@@ -1161,14 +1176,60 @@ bool WriteBlockToDisk(const CBlock& block, CDiskBlockPos& pos, const CMessageHea
     unsigned int nSize = fileout.GetSerializeSize(block);
     fileout << FLATDATA(messageStart) << nSize;
 
-    // Write block
-    long fileOutPos = ftell(fileout.Get());
-    if (fileOutPos < 0)
-        return error("WriteBlockToDisk: ftell failed");
-    pos.nPos = (unsigned int)fileOutPos;
-    fileout << block;
+
+    if (true)
+    {
 
 
+    	// Write block
+    	long fileOutPos = ftell(fileout.Get());
+    	if (fileOutPos < 0)
+    		return error("WriteBlockToDisk: ftell failed");
+    	pos.nPos = (unsigned int)fileOutPos;
+    	fileout << block;
+    }
+    else
+    {
+
+    	std::string blockS = block.ToString();
+
+    	const int SYMBOL_LEN = 1;
+    	const int SYMBOL_SIZE = blockS.length();
+    	const int overhead = 3;
+
+    	class Array_Data_Symbol input_symbol(SYMBOL_SIZE, SYMBOL_LEN);
+
+    	for (unsigned int i=0;i <input_symbol.K; ++i)
+    	{
+    		input_symbol.symbol[i].s[0] = blockS[i];
+    	}
+
+    	class LT_Encoding encoder(&input_symbol);
+    	class Array_Data_Symbol D(input_symbol.K, SYMBOL_LEN);
+
+    	std::vector<uint32_t> ESI;
+
+    	for (unsigned int i = 0; i < input_symbol.K + overhead; ++i)
+    	{
+    		ESI.push_back(i);
+    		D.ESIs.push_back(i);
+    	}
+
+    	D.symbol = encoder.LTEnc_Generate(ESI);
+    	class R10_Decoder decoder(input_symbol.K, SYMBOL_LEN);
+
+    	class Array_Data_Symbol C = decoder.Get_Inter_Symbols(D, input_symbol.K);
+
+    	long fileOutPos = ftell(fileout.Get());
+    	if (fileOutPos < 0)
+    		return error("WriteBlockToDisk: ftell failed");
+    	pos.nPos = (unsigned int)fileOutPos;
+    	for (unsigned int i=0; i<D.symbol.size();++i)
+    	{
+    		fileout << D.symbol[i].s[0];
+
+    	}
+    }
 
     return true;
 }
@@ -1730,7 +1791,7 @@ static DisconnectResult DisconnectBlock(const CBlock& block, CValidationState& s
                 const CTxOut &out = tx.vout[k];
 
                 if (out.scriptPubKey.IsPayToScriptHash()) {
-                    vector<unsigned char> hashBytes(out.scriptPubKey.begin()+2, out.scriptPubKey.begin()+22);
+                    std::vector<unsigned char> hashBytes(out.scriptPubKey.begin()+2, out.scriptPubKey.begin()+22);
 
                     // undo receiving activity
                     addressIndex.push_back(make_pair(CAddressIndexKey(2, uint160(hashBytes), pindex->nHeight, i, hash, k, false), out.nValue));
@@ -1739,7 +1800,7 @@ static DisconnectResult DisconnectBlock(const CBlock& block, CValidationState& s
                     addressUnspentIndex.push_back(make_pair(CAddressUnspentKey(2, uint160(hashBytes), hash, k), CAddressUnspentValue()));
 
                 } else if (out.scriptPubKey.IsPayToPublicKeyHash()) {
-                    vector<unsigned char> hashBytes(out.scriptPubKey.begin()+3, out.scriptPubKey.begin()+23);
+                    std::vector<unsigned char> hashBytes(out.scriptPubKey.begin()+3, out.scriptPubKey.begin()+23);
 
                     // undo receiving activity
                     addressIndex.push_back(make_pair(CAddressIndexKey(1, uint160(hashBytes), pindex->nHeight, i, hash, k, false), out.nValue));
@@ -1793,7 +1854,7 @@ static DisconnectResult DisconnectBlock(const CBlock& block, CValidationState& s
                     const Coin &coin = view.AccessCoin(tx.vin[j].prevout);
                     const CTxOut &prevout = coin.out;
                     if (prevout.scriptPubKey.IsPayToScriptHash()) {
-                        vector<unsigned char> hashBytes(prevout.scriptPubKey.begin()+2, prevout.scriptPubKey.begin()+22);
+                        std::vector<unsigned char> hashBytes(prevout.scriptPubKey.begin()+2, prevout.scriptPubKey.begin()+22);
 
                         // undo spending activity
                         addressIndex.push_back(make_pair(CAddressIndexKey(2, uint160(hashBytes), pindex->nHeight, i, hash, j, true), prevout.nValue * -1));
@@ -1803,7 +1864,7 @@ static DisconnectResult DisconnectBlock(const CBlock& block, CValidationState& s
 
 
                     } else if (prevout.scriptPubKey.IsPayToPublicKeyHash()) {
-                        vector<unsigned char> hashBytes(prevout.scriptPubKey.begin()+3, prevout.scriptPubKey.begin()+23);
+                        std::vector<unsigned char> hashBytes(prevout.scriptPubKey.begin()+3, prevout.scriptPubKey.begin()+23);
 
                         // undo spending activity
                         addressIndex.push_back(make_pair(CAddressIndexKey(1, uint160(hashBytes), pindex->nHeight, i, hash, j, true), prevout.nValue * -1));
@@ -2130,10 +2191,10 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
                     int addressType;
 
                     if (prevout.scriptPubKey.IsPayToScriptHash()) {
-                        hashBytes = uint160(vector <unsigned char>(prevout.scriptPubKey.begin()+2, prevout.scriptPubKey.begin()+22));
+                        hashBytes = uint160(std::vector <unsigned char>(prevout.scriptPubKey.begin()+2, prevout.scriptPubKey.begin()+22));
                         addressType = 2;
                     } else if (prevout.scriptPubKey.IsPayToPublicKeyHash()) {
-                        hashBytes = uint160(vector <unsigned char>(prevout.scriptPubKey.begin()+3, prevout.scriptPubKey.begin()+23));
+                        hashBytes = uint160(std::vector <unsigned char>(prevout.scriptPubKey.begin()+3, prevout.scriptPubKey.begin()+23));
                         addressType = 1;
                     } else {
                         hashBytes.SetNull();
@@ -2183,7 +2244,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
                 const CTxOut &out = tx.vout[k];
 
                 if (out.scriptPubKey.IsPayToScriptHash()) {
-                    vector<unsigned char> hashBytes(out.scriptPubKey.begin()+2, out.scriptPubKey.begin()+22);
+                    std::vector<unsigned char> hashBytes(out.scriptPubKey.begin()+2, out.scriptPubKey.begin()+22);
 
                     // record receiving activity
                     addressIndex.push_back(make_pair(CAddressIndexKey(2, uint160(hashBytes), pindex->nHeight, i, txhash, k, false), out.nValue));
@@ -2192,7 +2253,7 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
                     addressUnspentIndex.push_back(make_pair(CAddressUnspentKey(2, uint160(hashBytes), txhash, k), CAddressUnspentValue(out.nValue, out.scriptPubKey, pindex->nHeight)));
 
                 } else if (out.scriptPubKey.IsPayToPublicKeyHash()) {
-                    vector<unsigned char> hashBytes(out.scriptPubKey.begin()+3, out.scriptPubKey.begin()+23);
+                    std::vector<unsigned char> hashBytes(out.scriptPubKey.begin()+3, out.scriptPubKey.begin()+23);
 
                     // record receiving activity
                     addressIndex.push_back(make_pair(CAddressIndexKey(1, uint160(hashBytes), pindex->nHeight, i, txhash, k, false), out.nValue));
@@ -3722,7 +3783,7 @@ bool static LoadBlockIndexDB()
     boost::this_thread::interruption_point();
 
     // Calculate nChainWork
-    vector<pair<int, CBlockIndex*> > vSortedByHeight;
+    std::vector<pair<int, CBlockIndex*> > vSortedByHeight;
     vSortedByHeight.reserve(mapBlockIndex.size());
     BOOST_FOREACH(const PAIRTYPE(uint256, CBlockIndex*)& item, mapBlockIndex)
     {

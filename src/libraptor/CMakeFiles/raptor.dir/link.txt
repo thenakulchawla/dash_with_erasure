@@ -1,0 +1,2 @@
+/usr/bin/ar qc libraptor.a  CMakeFiles/raptor.dir/RandNum_Generator.o CMakeFiles/raptor.dir/Degree_Generator.o CMakeFiles/raptor.dir/Triple_Generator.o CMakeFiles/raptor.dir/Partition.o CMakeFiles/raptor.dir/Inter_Symbol_Generator.o CMakeFiles/raptor.dir/Array_Data_Types.o CMakeFiles/raptor.dir/LT_Encoding.o CMakeFiles/raptor.dir/Utility.o CMakeFiles/raptor.dir/R10_Decoder.o
+/usr/bin/ranlib libraptor.a
