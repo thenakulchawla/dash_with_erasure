@@ -48,6 +48,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/math/distributions/poisson.hpp>
 #include <boost/thread.hpp>
+#include "Jerasure/include/jerasure.h"
+
 
 using namespace std;
 
@@ -1165,6 +1167,8 @@ bool WriteBlockToDisk(const CBlock& block, CDiskBlockPos& pos, const CMessageHea
         return error("WriteBlockToDisk: ftell failed");
     pos.nPos = (unsigned int)fileOutPos;
     fileout << block;
+
+
 
     return true;
 }
