@@ -188,6 +188,13 @@ BITCOIN_CORE_H = \
   util.h \
   utilmoneystr.h \
   utilstrencodings.h \
+  jerasure/cauchy.h \
+  jerasure/galois.h \
+  jerasure/liberation.h \
+  jerasure/reed_sol.h \
+  jerasure/timing.h \
+  jerasure/encoder.h \
+  jerasure/decoder.h \
   utiltime.h \
   validation.h \
   validationinterface.h \
