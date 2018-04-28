@@ -407,6 +407,7 @@ std::string HelpMessage(HelpMessageMode mode)
     }
     strUsage += HelpMessageOpt("-datadir=<dir>", _("Specify data directory"));
     strUsage += HelpMessageOpt("-dbcache=<n>", strprintf(_("Set database cache size in megabytes (%d to %d, default: %d)"), nMinDbCache, nMaxDbCache, nDefaultDbCache));
+    // Nakul read
     strUsage += HelpMessageOpt("-loadblock=<file>", _("Imports blocks from external blk000??.dat file on startup"));
     strUsage += HelpMessageOpt("-maxorphantx=<n>", strprintf(_("Keep at most <n> unconnectable transactions in memory (default: %u)"), DEFAULT_MAX_ORPHAN_TRANSACTIONS));
     strUsage += HelpMessageOpt("-maxmempool=<n>", strprintf(_("Keep the transaction memory pool below <n> megabytes (default: %u)"), DEFAULT_MAX_MEMPOOL_SIZE));
@@ -719,6 +720,8 @@ void CleanupBlockRevFiles()
         remove(item.second);
     }
 }
+
+
 
 void ThreadImport(std::vector<boost::filesystem::path> vImportFiles)
 {
@@ -1523,6 +1526,27 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
             fReindex = true;
         }
     }
+
+//    // Create erasure code directories
+//    boost::filesystem::path erasureDir = GetDataDir() / "erasure";
+//    if (!boost::filesystem::exists(erasureDir))
+//    {
+//    	boost::filesystem::create_directories(erasureDir);
+//
+//
+//    }
+//
+//
+//
+//    // Create raptor code directories
+//    boost::filesystem::path raptorDir = GetDataDir() / "raptor";
+//    if (!boost::filesystem::exists(raptorDir))
+//    {
+//        	boost::filesystem::create_directories(raptorDir);
+//
+//
+//    }
+
 
     // cache size calculations
     int64_t nTotalCache = (GetArg("-dbcache", nDefaultDbCache) << 20);

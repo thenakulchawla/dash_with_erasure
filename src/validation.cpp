@@ -49,23 +49,6 @@
 #include <boost/math/distributions/poisson.hpp>
 #include <boost/thread.hpp>
 
-// Add libraptor files
-
-#include "libraptor/RandNum_Generator.h"
-#include "libraptor/Degree_Generator.h"
-#include "libraptor/rfc5053_config.h"
-#include "libraptor/Partition.h"
-#include "libraptor/Array_Data_Types.h"
-#include "libraptor/Inter_Symbol_Generator.h"
-#include "libraptor/R10_Decoder.h"
-#include "libraptor/LT_Encoding.h"
-#include "libraptor/Utility.h"
-#include "libraptor/storage_adaptors.h"
-
-//#include "Jerasure/include/galois.h"
-//#include "Jerasure/include/jerasure.h"
-
-
 using namespace std;
 
 #if defined(NDEBUG)
@@ -1176,63 +1159,62 @@ bool WriteBlockToDisk(const CBlock& block, CDiskBlockPos& pos, const CMessageHea
     unsigned int nSize = fileout.GetSerializeSize(block);
     fileout << FLATDATA(messageStart) << nSize;
 
-
-    if (true)
-    {
-
-
-    	// Write block
-    	long fileOutPos = ftell(fileout.Get());
-    	if (fileOutPos < 0)
-    		return error("WriteBlockToDisk: ftell failed");
-    	pos.nPos = (unsigned int)fileOutPos;
-    	fileout << block;
-    }
-    else
-    {
-
-    	std::string blockS = block.ToString();
-
-    	const int SYMBOL_LEN = 1;
-    	const int SYMBOL_SIZE = blockS.length();
-    	const int overhead = 3;
-
-    	class Array_Data_Symbol input_symbol(SYMBOL_SIZE, SYMBOL_LEN);
-
-    	for (unsigned int i=0;i <input_symbol.K; ++i)
-    	{
-    		input_symbol.symbol[i].s[0] = blockS[i];
-    	}
-
-    	class LT_Encoding encoder(&input_symbol);
-    	class Array_Data_Symbol D(input_symbol.K, SYMBOL_LEN);
-
-    	std::vector<uint32_t> ESI;
-
-    	for (unsigned int i = 0; i < input_symbol.K + overhead; ++i)
-    	{
-    		ESI.push_back(i);
-    		D.ESIs.push_back(i);
-    	}
-
-    	D.symbol = encoder.LTEnc_Generate(ESI);
-    	class R10_Decoder decoder(input_symbol.K, SYMBOL_LEN);
-
-    	class Array_Data_Symbol C = decoder.Get_Inter_Symbols(D, input_symbol.K);
-
-    	long fileOutPos = ftell(fileout.Get());
-    	if (fileOutPos < 0)
-    		return error("WriteBlockToDisk: ftell failed");
-    	pos.nPos = (unsigned int)fileOutPos;
-    	for (unsigned int i=0; i<D.symbol.size();++i)
-    	{
-    		fileout << D.symbol[i].s[0];
-
-    	}
-    }
+    // Write block
+    long fileOutPos = ftell(fileout.Get());
+    if (fileOutPos < 0)
+    	return error("WriteBlockToDisk: ftell failed");
+    pos.nPos = (unsigned int)fileOutPos;
+    fileout << block;
 
     return true;
 }
+
+
+//bool WriteRaptorCodesToDisk(const CBlock& block, CDiskBlockPos& pos, const CMessageHeader::MessageStartChars& messageStart)
+//{
+//		std::string blockS = block.ToString();
+//	    const int SYMBOL_LEN = 1;
+//	    const int SYMBOL_SIZE = blockS.length();
+//	    const int overhead = 3;
+//
+//	    class Array_Data_Symbol input_symbol(SYMBOL_SIZE, SYMBOL_LEN);
+//
+//	    for (unsigned int i=0;i <input_symbol.K; ++i)
+//	    {
+//	    	input_symbol.symbol[i].s[0] = blockS[i];
+//	    }
+//
+//	    class LT_Encoding encoder(&input_symbol);
+//	    class Array_Data_Symbol D(input_symbol.K, SYMBOL_LEN);
+//
+//	    std::vector<uint32_t> ESI;
+//
+//	    for (unsigned int i = 0; i < input_symbol.K + overhead; ++i)
+//	    {
+//	    	ESI.push_back(i);
+//	    	D.ESIs.push_back(i);
+//	    }
+//
+//	    D.symbol = encoder.LTEnc_Generate(ESI);
+//	    class R10_Decoder decoder(input_symbol.K, SYMBOL_LEN);
+//
+//	    class Array_Data_Symbol C = decoder.Get_Inter_Symbols(D, input_symbol.K);
+//
+//	    CAutoFile fileoutRaptor(OpenRaptorFile(pos, false), SER_DISK, CLIENT_VERSION);
+//
+//	    long fileOutPosRaptor = ftell(fileoutRaptor.Get());
+//	    if (fileOutPosRaptor < 0)
+//	    	return error("WriteBlockToDisk: ftell failed");
+//	    pos.nPos = (unsigned int)fileOutPosRaptor;
+//	    for (unsigned int i=0; i<D.symbol.size();++i)
+//	    {
+//	    	fileoutRaptor << D.symbol[i].s[0];
+//
+//	    }
+//
+//	    return true;
+//
+//}
 
 bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, const Consensus::Params& consensusParams)
 {
@@ -3749,10 +3731,30 @@ FILE* OpenUndoFile(const CDiskBlockPos &pos, bool fReadOnly) {
     return OpenDiskFile(pos, "rev", fReadOnly);
 }
 
+//FILE* OpenErasureFile(const CDiskBlockPos &pos, bool fReadOnly){
+//	return OpenDiskFile(pos, "era", fReadOnly);
+//}
+
+//FILE* OpenRaptorFile(const CDiskBlockPos &pos, bool fReadOnly){
+//	return OpenDiskFile(pos, "rap", fReadOnly);
+//}
+
+
+
 boost::filesystem::path GetBlockPosFilename(const CDiskBlockPos &pos, const char *prefix)
 {
     return GetDataDir() / "blocks" / strprintf("%s%05u.dat", prefix, pos.nFile);
 }
+
+//boost::filesystem::path GetErasurePosFilename(const CDiskBlockPos &pos, const char *prefix)
+//{
+//    return GetDataDir() / "erasure" / strprintf("%s%05u.dat", prefix, pos.nFile);
+//}
+
+//boost::filesystem::path GetRaptorPosFilename(const CDiskBlockPos &pos, const char *prefix)
+//{
+//    return GetDataDir() / "raptor" / strprintf("%s%05u.dat", prefix, pos.nFile);
+//}
 
 CBlockIndex * InsertBlockIndex(uint256 hash)
 {

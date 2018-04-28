@@ -235,7 +235,20 @@ FILE* OpenBlockFile(const CDiskBlockPos &pos, bool fReadOnly = false);
 /** Open an undo file (rev?????.dat) */
 FILE* OpenUndoFile(const CDiskBlockPos &pos, bool fReadOnly = false);
 /** Translation to a filesystem path */
+
+bool EncodeUsingErasure(FILE* fileIn);
+
+//FILE* OpenErasureFile(const CDiskBlockPos &pos, bool fReadOnly = false);
+///** Open an undo file (rev?????.dat) */
+//FILE* OpenRaptorFile(const CDiskBlockPos &pos, bool fReadOnly = false);
+
+/** Translation to a filesystem path */
 boost::filesystem::path GetBlockPosFilename(const CDiskBlockPos &pos, const char *prefix);
+///** Translation to a filesystem path */
+//boost::filesystem::path GetErasurePosFilename(const CDiskBlockPos &pos, const char *prefix);
+///** Translation to a filesystem path */
+//boost::filesystem::path GetRaptorPosFilename(const CDiskBlockPos &pos, const char *prefix);
+
 /** Import blocks from an external file */
 bool LoadExternalBlockFile(const CChainParams& chainparams, FILE* fileIn, CDiskBlockPos *dbp = NULL);
 /** Initialize a new block tree database + block data on disk */
@@ -422,6 +435,8 @@ bool GetAddressUnspent(uint160 addressHash, int type,
 
 /** Functions for disk access for blocks */
 bool WriteBlockToDisk(const CBlock& block, CDiskBlockPos& pos, const CMessageHeader::MessageStartChars& messageStart);
+bool WriteRaptorToDisk(const CBlock& block, CDiskBlockPos& pos, const CMessageHeader::MessageStartChars& messageStart);
+//bool WriteErasureCodesToDisk(FILE* );
 bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, const Consensus::Params& consensusParams);
 bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus::Params& consensusParams);
 

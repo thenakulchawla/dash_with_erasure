@@ -28,7 +28,7 @@ LIBBITCOIN_UTIL=libbitcoin_util.a
 LIBBITCOIN_CRYPTO=crypto/libbitcoin_crypto.a
 LIBBITCOINQT=qt/libbitcoinqt.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
-LIBRAPTOR=libraptor.a
+LIBERASURE=jeraure/libbitcoin_jerasure.a
 
 $(LIBSECP256K1): $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
@@ -41,7 +41,8 @@ EXTRA_LIBRARIES += \
   libbitcoin_common.a \
   libbitcoin_server.a \
   libbitcoin_cli.a \
-  libraptor.a
+  libbitcoin_jerasure.a
+  
 if ENABLE_WALLET
 BITCOIN_INCLUDES += $(BDB_CPPFLAGS)
 EXTRA_LIBRARIES += libbitcoin_wallet.a
@@ -72,19 +73,6 @@ endif
 .PHONY: FORCE check-symbols check-security
 # dash core #
 BITCOIN_CORE_H = \
- libraptor/Utility.h \
- libraptor/Systematic_Indices.h \
- libraptor/Degree_Generator.h \
- libraptor/Triple_Generator.h \
- libraptor/Array_Data_Types.h \
- libraptor/Inter_Symbol_Generator.h \
- libraptor/rfc5053_config.h \
- libraptor/Partition.h \
- libraptor/RandNum_Generator.h \
- libraptor/storage_adaptor.h \
- libraptor/R10_Encoder.h \
- libraptor/R10_Decoder.h \
-  libraptor/LT_Encoding.h \
   addrdb.h \
   activemasternode.h \
   addressindex.h \
@@ -226,17 +214,6 @@ libbitcoin_util_a-clientversion.$(OBJEXT): obj/build.h
 libbitcoin_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
 libbitcoin_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libbitcoin_server_a_SOURCES = \
-libraptor/Utility.cpp \
- libraptor/Systematic_Indices.cpp \
- libraptor/Degree_Generator.cpp \
- libraptor/Triple_Generator.cpp \
- libraptor/Array_Data_Types.cpp \
- libraptor/Inter_Symbol_Generator.cpp \
- libraptor/Partition.cpp \
- libraptor/RandNum_Generator.cpp \
- libraptor/R10_Encoder.cpp \
- libraptor/R10_Decoder.cpp \
-  libraptor/LT_Encoding.cpp \
   activemasternode.cpp \
   addrman.cpp \
   addrdb.cpp \
@@ -256,6 +233,14 @@ libraptor/Utility.cpp \
   governance-validators.cpp \
   governance-vote.cpp \
   governance-votedb.cpp \
+  jerasure/cauchy.c \
+  jerasure/galois.c \
+  jerasure/liberation.c \
+  jerasure/reed_sol.c \
+  jerasure/timing.c \
+  jerasure/encoder.c \
+  jerasure/decoder.c \
+  erasure_encode.c \
   masternode.cpp \
   masternode-payments.cpp \
   masternode-sync.cpp \
@@ -292,7 +277,7 @@ libraptor/Utility.cpp \
   validation.cpp \
   validationinterface.cpp \
   versionbits.cpp \
-  $(BITCOIN_CORE_H)
+   $(BITCOIN_CORE_H)
 
 if ENABLE_ZMQ
 LIBBITCOIN_ZMQ=libbitcoin_zmq.a
@@ -323,6 +308,23 @@ libbitcoin_wallet_a_SOURCES = \
   wallet/walletdb.cpp \
   policy/rbf.cpp \
   $(BITCOIN_CORE_H)
+  
+#jerasure library
+#jerasure_libbitcoin_jerasure_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_CONFIG_INCLUDES) $(PIC_FLAGS)
+#jerasure_libbitcoin_jerasure_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS) $(PIC_FLAGS)
+#jerasure_libbitcoin_jerasure_a_SOURCES = \
+#jerasure/cauchy.h \
+#jerasure/galois.h \
+#jerasure/liberation.h \
+#jerasure/reed_sol.h \
+#jerasure/timing.h \
+#jerasure/cauchy.c \
+#jerasure/galois.c \
+#jerasure/liberation.c \
+#jerasure/reed_sol.c \
+#jerasure/timing.c \
+#jerasure/encoder.c \
+#jerasure/decoder.c
 
 # crypto primitives library
 crypto_libbitcoin_crypto_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_CONFIG_INCLUDES) $(PIC_FLAGS)
@@ -483,7 +485,7 @@ dash_cli_LDADD = \
   $(LIBBITCOIN_CLI) \
   $(LIBUNIVALUE) \
   $(LIBBITCOIN_UTIL)
-dash_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS) $(JEARSURE_LIBS)
+dash_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS) 
 #
 
 # dash-tx binary #
@@ -503,7 +505,7 @@ dash_tx_LDADD = \
   $(LIBBITCOIN_CRYPTO) \
   $(LIBSECP256K1)
 
-dash_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS) $(JERASURE_LIBS)
+dash_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS) 
 #
 
 # dashconsensus library #
