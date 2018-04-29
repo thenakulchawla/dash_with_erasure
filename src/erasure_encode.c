@@ -65,6 +65,7 @@ is the file name with "_k#" or "_m#" and then the extension.
 #include <stdlib.h>
 #include <errno.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <gf_rand.h>
 #include <unistd.h>
 #include "jerasure/jerasure.h"
@@ -134,7 +135,7 @@ int jfread(void *ptr, int size, int nmembers, FILE *stream)
 }
 
 
-void EncodeUsingErasure(char* inFile, int k, int m, char* codingType, int w, int packetsize ,int buffersize )
+bool EncodeUsingErasure(char* curdir_path, char* inFile, int k, int m, char* codingType, int w, int packetsize ,int buffersize )
 {
 	FILE *fp, *fp2;				// file pointers
 //	char *block;				// padding file
@@ -179,15 +180,16 @@ void EncodeUsingErasure(char* inFile, int k, int m, char* codingType, int w, int
 	/* Conversion of parameters and error checking */
 	if (k == 0 || k <= 0) {
 		fprintf(stderr,  "Invalid value for k\n");
-		exit(0);
+		return false;
+
 	}
 	if (m == 0 || m < 0) {
 		fprintf(stderr,  "Invalid value for m\n");
-		exit(0);
+		return false;
 	}
 	if (w == 0 || w <= 0) {
 		fprintf(stderr,  "Invalid value for w.\n");
-		exit(0);
+		return false;
 	}
 
 
@@ -235,17 +237,17 @@ void EncodeUsingErasure(char* inFile, int k, int m, char* codingType, int w, int
 		tech = Reed_Sol_Van;
 		if (w != 8 && w != 16 && w != 32) {
 			fprintf(stderr,  "w must be one of {8, 16, 32}\n");
-			exit(0);
+			return false;
 		}
 	}
 	else if (strcmp(codingType, "reed_sol_r6_op") == 0) {
 		if (m != 2) {
 			fprintf(stderr,  "m must be equal to 2\n");
-			exit(0);
+			return false;
 		}
 		if (w != 8 && w != 16 && w != 32) {
 			fprintf(stderr,  "w must be one of {8, 16, 32}\n");
-			exit(0);
+			return false;
 		}
 		tech = Reed_Sol_R6_Op;
 	}
@@ -253,76 +255,76 @@ void EncodeUsingErasure(char* inFile, int k, int m, char* codingType, int w, int
 		tech = Cauchy_Orig;
 		if (packetsize == 0) {
 			fprintf(stderr, "Must include packetsize.\n");
-			exit(0);
+			return false;
 		}
 	}
 	else if (strcmp(codingType, "cauchy_good") == 0) {
 		tech = Cauchy_Good;
 		if (packetsize == 0) {
 			fprintf(stderr, "Must include packetsize.\n");
-			exit(0);
+			return false;
 		}
 	}
 	else if (strcmp(codingType, "liberation") == 0) {
 		if (k > w) {
 			fprintf(stderr,  "k must be less than or equal to w\n");
-			exit(0);
+			return false;
 		}
 		if (w <= 2 || !(w%2) || !is_prime(w)) {
 			fprintf(stderr,  "w must be greater than two and w must be prime\n");
-			exit(0);
+			return false;
 		}
 		if (packetsize == 0) {
 			fprintf(stderr, "Must include packetsize.\n");
-			exit(0);
+			return false;
 		}
 		if ((packetsize%(sizeof(long))) != 0) {
 			fprintf(stderr,  "packetsize must be a multiple of sizeof(long)\n");
-			exit(0);
+			return false;
 		}
 		tech = Liberation;
 	}
 	else if (strcmp(codingType, "blaum_roth") == 0) {
 		if (k > w) {
 			fprintf(stderr,  "k must be less than or equal to w\n");
-			exit(0);
+			return false;
 		}
 		if (w <= 2 || !((w+1)%2) || !is_prime(w+1)) {
 			fprintf(stderr,  "w must be greater than two and w+1 must be prime\n");
-			exit(0);
+			return false;
 		}
 		if (packetsize == 0) {
 			fprintf(stderr, "Must include packetsize.\n");
-			exit(0);
+			return false;
 		}
 		if ((packetsize%(sizeof(long))) != 0) {
 			fprintf(stderr,  "packetsize must be a multiple of sizeof(long)\n");
-			exit(0);
+			return false;
 		}
 		tech = Blaum_Roth;
 	}
 	else if (strcmp(codingType, "liber8tion") == 0) {
 		if (packetsize == 0) {
 			fprintf(stderr, "Must include packetsize\n");
-			exit(0);
+			return false;
 		}
 		if (w != 8) {
 			fprintf(stderr, "w must equal 8\n");
-			exit(0);
+			return false;
 		}
 		if (m != 2) {
 			fprintf(stderr, "m must equal 2\n");
-			exit(0);
+			return false;
 		}
 		if (k > w) {
 			fprintf(stderr, "k must be less than or equal to w\n");
-			exit(0);
+			return false;
 		}
 		tech = Liber8tion;
 	}
 	else {
 		fprintf(stderr,  "Not a valid coding technique. Choose one of the following: reed_sol_van, reed_sol_r6_op, cauchy_orig, cauchy_good, liberation, blaum_roth, liber8tion, no_coding\n");
-		exit(0);
+		return false;
 	}
 
 
@@ -331,8 +333,9 @@ void EncodeUsingErasure(char* inFile, int k, int m, char* codingType, int w, int
 
 	/* Get current working directory for construction of file names */
 
-//	curdir = (char*)malloc(sizeof(char)*1000);
-	curdir = GetDataDir();
+	curdir = (char*)malloc(sizeof(char)*1000);
+	strcpy(curdir,curdir_path);
+//	curdir = GetDataDir() / "Coding";
 	assert(curdir == getcwd(curdir, 1000));
 
 
@@ -340,14 +343,14 @@ void EncodeUsingErasure(char* inFile, int k, int m, char* codingType, int w, int
 	fp = fopen(inFile, "rb");
 	if (fp == NULL) {
 		fprintf(stderr,  "Unable to open file.\n");
-		exit(0);
+		return false;
 	}
 
 	/* Create Coding directory */
 	i = mkdir("Coding", S_IRWXU);
 	if (i == -1 && errno != EEXIST) {
 		fprintf(stderr, "Unable to create Coding directory.\n");
-		exit(0);
+		return false;
 	}
 
 	/* Determine original size of file */
@@ -425,7 +428,7 @@ void EncodeUsingErasure(char* inFile, int k, int m, char* codingType, int w, int
 	coding = (char **)malloc(sizeof(char*)*m);
 	for (i = 0; i < m; i++) {
 		coding[i] = (char *)malloc(sizeof(char)*kPlusM);
-                if (coding[i] == NULL) { perror("malloc"); exit(1); }
+                if (coding[i] == NULL) { perror("malloc"); return false; }
 	}
 
 
@@ -579,6 +582,8 @@ void EncodeUsingErasure(char* inFile, int k, int m, char* codingType, int w, int
 	free(fname);
 	free(paddingFile);
 	free(curdir);
+
+	return true;
 
 }
 

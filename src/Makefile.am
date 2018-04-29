@@ -1,7 +1,7 @@
 DIST_SUBDIRS = secp256k1 univalue
 
 AM_LDFLAGS = $(PTHREAD_CFLAGS) $(LIBTOOL_LDFLAGS) $(HARDENED_LDFLAGS)
-AM_CXXFLAGS = $(HARDENED_CXXFLAGS)
+AM_CXXFLAGS = $(HARDENED_CXXFLAGS) $(PIC_FLAGS)
 AM_CPPFLAGS = $(HARDENED_CPPFLAGS)
 EXTRA_LIBRARIES =
 
@@ -15,7 +15,7 @@ LIBUNIVALUE = $(UNIVALUE_LIBS)
 endif
 
 BITCOIN_CONFIG_INCLUDES=-I$(builddir)/config
-BITCOIN_INCLUDES=-I$(builddir) -I$(builddir)/obj $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS) $(CRYPTO_CFLAGS) $(SSL_CFLAGS) $(JERASURE_CFLAGS)
+BITCOIN_INCLUDES=-I$(builddir) -I$(builddir)/obj $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS) $(CRYPTO_CFLAGS) $(SSL_CFLAGS)
 
 BITCOIN_INCLUDES += -I$(srcdir)/secp256k1/include
 BITCOIN_INCLUDES += $(UNIVALUE_CFLAGS)
@@ -28,7 +28,6 @@ LIBBITCOIN_UTIL=libbitcoin_util.a
 LIBBITCOIN_CRYPTO=crypto/libbitcoin_crypto.a
 LIBBITCOINQT=qt/libbitcoinqt.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
-LIBERASURE=jeraure/libbitcoin_jerasure.a
 
 $(LIBSECP256K1): $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
@@ -40,8 +39,7 @@ EXTRA_LIBRARIES += \
   libbitcoin_util.a \
   libbitcoin_common.a \
   libbitcoin_server.a \
-  libbitcoin_cli.a \
-  libbitcoin_jerasure.a
+  libbitcoin_cli.a
   
 if ENABLE_WALLET
 BITCOIN_INCLUDES += $(BDB_CPPFLAGS)
@@ -188,14 +186,24 @@ BITCOIN_CORE_H = \
   util.h \
   utilmoneystr.h \
   utilstrencodings.h \
-  jerasure/cauchy.h \
-  jerasure/galois.h \
-  jerasure/liberation.h \
-  jerasure/reed_sol.h \
-  jerasure/timing.h \
-  jerasure/encoder.h \
-  jerasure/decoder.h \
   utiltime.h \
+  jerasure/gf_w4.h \
+  jerasure/gf_w8.h \
+  jerasure/gf_w16.h \
+  jerasure/gf_w32.h \
+  jerasure/gf_w64.h \
+  jerasure/gf_rand.h \
+  jerasure/gf_cpu.h \
+  jerasure/gf_int.h \
+  jerasure/gf_method.h \
+  jerasure/gf_general.h \
+  jerasure/gf_complete.h \
+  jerasure/galois.h \
+  jerasure/jerasure.h \
+  jerasure/reed_sol.h \
+  jerasure/cauchy.h \
+  jerasure/liberation.h \
+  jerasure/timing.h \
   validation.h \
   validationinterface.h \
   version.h \
@@ -218,8 +226,8 @@ obj/build.h: FORCE
 libbitcoin_util_a-clientversion.$(OBJEXT): obj/build.h
 
 # server: shared between dashd and dash-qt
-libbitcoin_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
-libbitcoin_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libbitcoin_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) $(PIC_FLAGS)
+libbitcoin_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS) $(PIC_FLAGS)
 libbitcoin_server_a_SOURCES = \
   activemasternode.cpp \
   addrman.cpp \
@@ -240,14 +248,6 @@ libbitcoin_server_a_SOURCES = \
   governance-validators.cpp \
   governance-vote.cpp \
   governance-votedb.cpp \
-  jerasure/cauchy.c \
-  jerasure/galois.c \
-  jerasure/liberation.c \
-  jerasure/reed_sol.c \
-  jerasure/timing.c \
-  jerasure/encoder.c \
-  jerasure/decoder.c \
-  erasure_encode.c \
   masternode.cpp \
   masternode-payments.cpp \
   masternode-sync.cpp \
@@ -281,6 +281,30 @@ libbitcoin_server_a_SOURCES = \
   torcontrol.cpp \
   txdb.cpp \
   txmempool.cpp \
+  jerasure/gf_w16_neon.c \
+  jerasure/gf_w32_neon.c \
+  jerasure/gf_w8_neon.c \
+  jerasure/gf_w4_neon.c \
+  jerasure/gf_w64_neon.c \
+  jerasure/gf_w4.c \
+  jerasure/gf_w8.c \
+  jerasure/gf_w16.c \
+  jerasure/gf_w32.c \
+  jerasure/gf_w64.c \
+  jerasure/gf_w128.c \
+  jerasure/gf_wgen.c \
+  jerasure/gf_method.c \
+  jerasure/gf_cpu.c \
+  jerasure/gf.c \
+  jerasure/gf_rand.c \
+  jerasure/gf_general.c \
+  jerasure/galois.c \
+  jerasure/jerasure.c \
+  jerasure/reed_sol.c \
+  jerasure/cauchy.c \
+  jerasure/liberation.c \
+  jerasure/timing.c \
+  erasure_encode.c \
   validation.cpp \
   validationinterface.cpp \
   versionbits.cpp \
@@ -315,23 +339,6 @@ libbitcoin_wallet_a_SOURCES = \
   wallet/walletdb.cpp \
   policy/rbf.cpp \
   $(BITCOIN_CORE_H)
-  
-#jerasure library
-#jerasure_libbitcoin_jerasure_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_CONFIG_INCLUDES) $(PIC_FLAGS)
-#jerasure_libbitcoin_jerasure_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS) $(PIC_FLAGS)
-#jerasure_libbitcoin_jerasure_a_SOURCES = \
-#jerasure/cauchy.h \
-#jerasure/galois.h \
-#jerasure/liberation.h \
-#jerasure/reed_sol.h \
-#jerasure/timing.h \
-#jerasure/cauchy.c \
-#jerasure/galois.c \
-#jerasure/liberation.c \
-#jerasure/reed_sol.c \
-#jerasure/timing.c \
-#jerasure/encoder.c \
-#jerasure/decoder.c
 
 # crypto primitives library
 crypto_libbitcoin_crypto_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_CONFIG_INCLUDES) $(PIC_FLAGS)
@@ -450,8 +457,8 @@ nodist_libbitcoin_util_a_SOURCES = $(srcdir)/obj/build.h
 
 # bitcoind binary #
 dashd_SOURCES = dashd.cpp
-dashd_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-dashd_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+dashd_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(PIC_FLAGS)
+dashd_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS) $(PIC_FLAGS)
 dashd_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS

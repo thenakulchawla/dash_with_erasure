@@ -48,6 +48,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/math/distributions/poisson.hpp>
 #include <boost/thread.hpp>
+#include "erasure_encode.c"
 
 using namespace std;
 
@@ -1150,6 +1151,7 @@ bool GetTransaction(const uint256 &hash, CTransaction &txOut, const Consensus::P
 
 bool WriteBlockToDisk(const CBlock& block, CDiskBlockPos& pos, const CMessageHeader::MessageStartChars& messageStart)
 {
+	CDiskBlockPos& positionForErasures = pos;
     // Open history file to append
     CAutoFile fileout(OpenBlockFile(pos), SER_DISK, CLIENT_VERSION);
     if (fileout.IsNull())
@@ -1166,55 +1168,51 @@ bool WriteBlockToDisk(const CBlock& block, CDiskBlockPos& pos, const CMessageHea
     pos.nPos = (unsigned int)fileOutPos;
     fileout << block;
 
+    bool isErasuresCreated = CreateErasureFiles(GetBlockPosFilename(positionForErasures, "blk"));
+    if(isErasuresCreated)
+    {
+    	std::cout<<"Erasures Created";
+    }
+    else
+    {
+    	std::cout<<"Erasures not created";
+    }
+
     return true;
 }
 
+bool CreateErasureFiles(boost::filesystem::path path)
+{
+	LOCK(cs_LastBlockFile);
 
-//bool WriteRaptorCodesToDisk(const CBlock& block, CDiskBlockPos& pos, const CMessageHeader::MessageStartChars& messageStart)
-//{
-//		std::string blockS = block.ToString();
-//	    const int SYMBOL_LEN = 1;
-//	    const int SYMBOL_SIZE = blockS.length();
-//	    const int overhead = 3;
-//
-//	    class Array_Data_Symbol input_symbol(SYMBOL_SIZE, SYMBOL_LEN);
-//
-//	    for (unsigned int i=0;i <input_symbol.K; ++i)
-//	    {
-//	    	input_symbol.symbol[i].s[0] = blockS[i];
-//	    }
-//
-//	    class LT_Encoding encoder(&input_symbol);
-//	    class Array_Data_Symbol D(input_symbol.K, SYMBOL_LEN);
-//
-//	    std::vector<uint32_t> ESI;
-//
-//	    for (unsigned int i = 0; i < input_symbol.K + overhead; ++i)
-//	    {
-//	    	ESI.push_back(i);
-//	    	D.ESIs.push_back(i);
-//	    }
-//
-//	    D.symbol = encoder.LTEnc_Generate(ESI);
-//	    class R10_Decoder decoder(input_symbol.K, SYMBOL_LEN);
-//
-//	    class Array_Data_Symbol C = decoder.Get_Inter_Symbols(D, input_symbol.K);
-//
-//	    CAutoFile fileoutRaptor(OpenRaptorFile(pos, false), SER_DISK, CLIENT_VERSION);
-//
-//	    long fileOutPosRaptor = ftell(fileoutRaptor.Get());
-//	    if (fileOutPosRaptor < 0)
-//	    	return error("WriteBlockToDisk: ftell failed");
-//	    pos.nPos = (unsigned int)fileOutPosRaptor;
-//	    for (unsigned int i=0; i<D.symbol.size();++i)
-//	    {
-//	    	fileoutRaptor << D.symbol[i].s[0];
-//
-//	    }
-//
-//	    return true;
-//
-//}
+	if (vinfoBlockFile[vinfoBlockFile.size()].nSize == MAX_BLOCKFILE_SIZE)
+	{
+		std::string fileName = path.filename().string();
+		char* fileNameToPass = &fileName[0u];
+		std::string filePath = path.parent_path().string();
+		char* filePathToPass = &filePath[0u];
+		unsigned int k = 3;
+		unsigned int m = 2;
+		char* codingType = "reed_sol_van";
+		unsigned int w = 8;
+		unsigned int packetsize = 0;
+		unsigned int buffersize = 0;
+
+		bool isErasuresCreated = EncodeUsingErasure(filePathToPass , fileNameToPass, k, m, codingType, w, packetsize, buffersize );
+		if (isErasuresCreated == false)
+			return false;
+
+	}
+	else
+	{
+		return false;
+
+	}
+
+	return true;
+
+
+}
 
 bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, const Consensus::Params& consensusParams)
 {

@@ -1527,26 +1527,14 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         }
     }
 
-//    // Create erasure code directories
-//    boost::filesystem::path erasureDir = GetDataDir() / "erasure";
-//    if (!boost::filesystem::exists(erasureDir))
-//    {
-//    	boost::filesystem::create_directories(erasureDir);
-//
-//
-//    }
-//
-//
-//
-//    // Create raptor code directories
-//    boost::filesystem::path raptorDir = GetDataDir() / "raptor";
-//    if (!boost::filesystem::exists(raptorDir))
-//    {
-//        	boost::filesystem::create_directories(raptorDir);
-//
-//
-//    }
 
+    // create Coding directory
+//    boost::filesystem::path codingDir = GetDataDir() / "Coding";
+//    if(!boost::filesystem::exists(codingDir))
+//    {
+//    	boost::filesystem::create_directories(codingDir);
+//    	// don't link it yet
+//    }
 
     // cache size calculations
     int64_t nTotalCache = (GetArg("-dbcache", nDefaultDbCache) << 20);
