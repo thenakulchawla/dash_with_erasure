@@ -48,7 +48,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/math/distributions/poisson.hpp>
 #include <boost/thread.hpp>
-#include "erasure_encode.c"
+
+#include "jerasure/erasure_encode.h"
 
 using namespace std;
 

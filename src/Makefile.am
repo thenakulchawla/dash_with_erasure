@@ -204,6 +204,7 @@ BITCOIN_CORE_H = \
   jerasure/cauchy.h \
   jerasure/liberation.h \
   jerasure/timing.h \
+  jerasure/erasure_encode.h \
   validation.h \
   validationinterface.h \
   version.h \
@@ -304,7 +305,7 @@ libbitcoin_server_a_SOURCES = \
   jerasure/cauchy.c \
   jerasure/liberation.c \
   jerasure/timing.c \
-  erasure_encode.c \
+  jerasure/erasure_encode.c \
   validation.cpp \
   validationinterface.cpp \
   versionbits.cpp \
