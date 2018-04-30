@@ -50,6 +50,7 @@
 #include <boost/thread.hpp>
 
 #include "jerasure/erasure_encode.h"
+#include <iomanip>
 
 using namespace std;
 
@@ -1166,17 +1167,23 @@ bool WriteBlockToDisk(const CBlock& block, CDiskBlockPos& pos, const CMessageHea
     long fileOutPos = ftell(fileout.Get());
     if (fileOutPos < 0)
     	return error("WriteBlockToDisk: ftell failed");
+
     pos.nPos = (unsigned int)fileOutPos;
     fileout << block;
 
-    bool isErasuresCreated = CreateErasureFiles(GetBlockPosFilename(positionForErasures, "blk"));
-    if(isErasuresCreated)
+    int fileCount = vinfoBlockFile.size();
+    if (fileCount >= 2)
     {
-    	std::cout<<"Erasures Created";
-    }
-    else
-    {
-    	std::cout<<"Erasures not created";
+
+        bool isErasuresCreated = CreateErasureFiles(GetBlockPosFilename(positionForErasures, "blk"));
+        if(isErasuresCreated)
+        {
+            std::cout<<"Erasures Created";
+        }
+        else
+        {
+            std::cout<<"Erasures not created";
+        }
     }
 
     return true;
@@ -1186,31 +1193,32 @@ bool CreateErasureFiles(boost::filesystem::path path)
 {
 	LOCK(cs_LastBlockFile);
 
-	if (vinfoBlockFile[vinfoBlockFile.size()].nSize == MAX_BLOCKFILE_SIZE)
-	{
-		std::string fileName = path.filename().string();
-		char* fileNameToPass = &fileName[0u];
-		std::string filePath = path.parent_path().string();
-		char* filePathToPass = &filePath[0u];
-		unsigned int k = 3;
-		unsigned int m = 2;
-		char* codingType = "reed_sol_van";
-		unsigned int w = 8;
-		unsigned int packetsize = 0;
-		unsigned int buffersize = 0;
+	// if (vinfoBlockFile[vinfoBlockFile.size()].nSize >= MIN_ERASURE_START && vinfoBlockFile[vinfoBlockFile.size()].nSize <= MAX_ERASURE_START)
+	// {
+        std::string tempFileName = path.filename().string();
+        std::string integerPart = tempFileName.substr(3,7);
+        int newFileNumberToAppend = stoi(integerPart) - 1;
+        std::stringstream ss;
+        ss << std::setw(5) << std::setfill('0') << newFileNumberToAppend;
+        std::string toAppend = ss.str();
+        std::string fileName1 = "blk" + toAppend + ".dat";
+        std::string fileName = path.parent_path().string() + "/" + fileName1;
+        char* fileNameToPass = &fileName[0u];
+        std::string filePath = path.parent_path().string();
+        char* filePathToPass = &filePath[0u];
+        unsigned int k = 3;
+        unsigned int m = 2;
+        char* codingType = "reed_sol_van";
+        unsigned int w = 8;
+        unsigned int packetsize = 0;
+        unsigned int buffersize = 0;
+        std::string dirPath = path.parent_path().string() + "/Coding";
+        // char* dirPathToPass = &dirPath[0u]; 
+        const char* dirPathToPass = dirPath.c_str(); 
 
-		bool isErasuresCreated = EncodeUsingErasure(filePathToPass , fileNameToPass, k, m, codingType, w, packetsize, buffersize );
-		if (isErasuresCreated == false)
-			return false;
+        bool isErasuresCreated = EncodeUsingErasure(dirPathToPass ,filePathToPass ,fileNameToPass , k, m, codingType, w, packetsize, buffersize );
 
-	}
-	else
-	{
-		return false;
-
-	}
-
-	return true;
+	return isErasuresCreated;
 
 
 }

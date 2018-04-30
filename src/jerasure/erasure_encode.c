@@ -55,7 +55,7 @@ is the file name with "_k#" or "_m#" and then the extension.
 (For example, inputfile test.txt would yield file "test_k1.txt".)
 */
 
-#pragma once
+/* #pragma once */
 
 #include <assert.h>
 #include <time.h>
@@ -136,8 +136,62 @@ int jfread(void *ptr, int size, int nmembers, FILE *stream)
   return size;
 }
 
+/* Function with behaviour like `mkdir -p'  */
+/* int mkpath(const char *s, mode_t mode){ */
+/*     char *q, *r = NULL, *path = NULL, *up = NULL; */
+/*     int rv; */
+/*  */
+/*     rv = -1; */
+/*     if (strcmp(s, ".") == 0 || strcmp(s, "/") == 0) */
+/*         return (0); */
+/*  */
+/*     if ((path = strdup(s)) == NULL) */
+/*         exit(1); */
+/*  */
+/*     if ((q = strdup(s)) == NULL) */
+/*         exit(1); */
+/*  */
+/*     if ((r = dirname(q)) == NULL) */
+/*         goto out; */
+/*  */
+/*     if ((up = strdup(r)) == NULL) */
+/*         exit(1); */
+/*  */
+/*     if ((mkpath(up, mode) == -1) && (errno != EEXIST)) */
+/*         goto out; */
+/*  */
+/*     if ((mkdir(path, mode) == -1) && (errno != EEXIST)) */
+/*         rv = -1; */
+/*     else */
+/*         rv = 0; */
+/*  */
+/* out: */
+/*     if (up != NULL) */
+/*         free(up); */
+/*     free(q); */
+/*     free(path); */
+/*     return (rv); */
+/* } */
 
-bool EncodeUsingErasure(char* curdir_path, char* inFile, int k, int m, char* codingType, int w, int packetsize ,int buffersize )
+static void mkpath(const char *dir) {
+        char tmp[256];
+        char *p = NULL;
+        size_t len;
+
+        snprintf(tmp, sizeof(tmp),"%s",dir);
+        len = strlen(tmp);
+        if(tmp[len - 1] == '/')
+                tmp[len - 1] = 0;
+        for(p = tmp + 1; *p; p++)
+                if(*p == '/') {
+                        *p = 0;
+                        mkdir(tmp, S_IRWXU);
+                        *p = '/';
+                }
+        mkdir(tmp, S_IRWXU);
+}
+
+bool EncodeUsingErasure(const char* dirCoding ,char* curdir_path, char* inFile, int k, int m, char* codingType, int w, int packetsize ,int buffersize )
 {
 	FILE *fp, *fp2;				// file pointers
 //	char *block;				// padding file
@@ -337,23 +391,29 @@ bool EncodeUsingErasure(char* curdir_path, char* inFile, int k, int m, char* cod
 
 	curdir = (char*)malloc(sizeof(char)*1000);
 	strcpy(curdir,curdir_path);
-//	curdir = GetDataDir() / "Coding";
-	assert(curdir == getcwd(curdir, 1000));
-
+	/* assert(curdir == getcwd(curdir, 1000)); */
 
 	/* Open file and error check */
 	fp = fopen(inFile, "rb");
 	if (fp == NULL) {
 		fprintf(stderr,  "Unable to open file.\n");
+                printf("Error %d \n", errno);
 		return false;
 	}
 
 	/* Create Coding directory */
-	i = mkdir("Coding", S_IRWXU);
-	if (i == -1 && errno != EEXIST) {
-		fprintf(stderr, "Unable to create Coding directory.\n");
-		return false;
-	}
+	/* i = mkdir("Coding", S_IRWXU); */
+	/* if (i == -1 && errno != EEXIST) { */
+	/* 	fprintf(stderr, "Unable to create Coding directory.\n"); */
+	/* 	return false; */
+	/* } */
+
+        mkpath(dirCoding);
+	/* if (i == -1 && errno != EEXIST) { */
+	/* 	fprintf(stderr, "Unable to create Coding directory.\n"); */
+	/* 	return false; */
+	/* } */
+
 
 	/* Determine original size of file */
 	stat(inFile, &status);

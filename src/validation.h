@@ -76,9 +76,11 @@ static const unsigned int DEFAULT_MEMPOOL_EXPIRY = 72;
 //static const unsigned int UNDOFILE_CHUNK_SIZE = 0x100000; // 1 MiB
 
 //New for sharding test
-static const unsigned int MAX_BLOCKFILE_SIZE = 0x100000; // 1MiB
-static const unsigned int BLOCKFILE_CHUNK_SIZE = 0x80000; // 512 KiB
-static const unsigned int UNDOFILE_CHUNK_SIZE = 0x40000; // 256 KiB
+static const unsigned int MAX_BLOCKFILE_SIZE = 0x40000; // 1MiB
+static const unsigned int BLOCKFILE_CHUNK_SIZE = 0x20000; // 512 KiB
+static const unsigned int UNDOFILE_CHUNK_SIZE = 0x10000; // 256 KiB
+static const unsigned int MIN_ERASURE_START = 0x40000;
+static const unsigned int MAX_ERASURE_START = 0x80000;
 
 /** Maximum number of script-checking threads allowed */
 static const int MAX_SCRIPTCHECK_THREADS = 16;

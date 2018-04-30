@@ -10,7 +10,8 @@ extern "C" {
 /* Function prototypes */
 int is_prime(int w);
 void ctrl_bs_handler(int dummy);
-bool EncodeUsingErasure(char* curdir_path, char* inFile, int k, int m, char* codingType, int w, int packetsize ,int buffersize );
+static void mkpath(const char *path);
+bool EncodeUsingErasure(const char* dirCoding ,char* curdir_path, char* inFile, int k, int m, char* codingType, int w, int packetsize ,int buffersize );
 
 
 
