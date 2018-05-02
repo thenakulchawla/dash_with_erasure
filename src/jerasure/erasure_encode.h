@@ -1,3 +1,6 @@
+#ifndef ERASURE_ENCODE_H
+#define ERASURE_ENCODE_H
+
 #include <stdint.h>
 #include <gf_complete.h>
 
@@ -17,4 +20,7 @@ bool EncodeUsingErasure(const char* dirCoding ,char* curdir_path, char* inFile, 
 
 #ifdef __cplusplus
 }
-#endif
+
+#endif // _cpluscplus
+
+#endif // ERASURE_ENCODE_H
