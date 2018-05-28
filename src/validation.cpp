@@ -1153,7 +1153,8 @@ bool GetTransaction(const uint256 &hash, CTransaction &txOut, const Consensus::P
 
 bool WriteBlockToDisk(const CBlock& block, CDiskBlockPos& pos, const CMessageHeader::MessageStartChars& messageStart)
 {
-	CDiskBlockPos& positionForErasures = pos;
+    CDiskBlockPos& positionForErasures = pos;
+
     // Open history file to append
     CAutoFile fileout(OpenBlockFile(pos), SER_DISK, CLIENT_VERSION);
     if (fileout.IsNull())
@@ -1171,20 +1172,20 @@ bool WriteBlockToDisk(const CBlock& block, CDiskBlockPos& pos, const CMessageHea
     pos.nPos = (unsigned int)fileOutPos;
     fileout << block;
 
-    int fileCount = vinfoBlockFile.size();
-    if (fileCount >= 2)
-    {
-
-        bool isErasuresCreated = CreateErasureFiles(GetBlockPosFilename(positionForErasures, "blk"));
-        if(isErasuresCreated)
-        {
-            std::cout<<"Erasures Created";
-        }
-        else
-        {
-            std::cout<<"Erasures not created";
-        }
-    }
+    // int fileCount = vinfoBlockFile.size();
+    // if (fileCount >= 2)
+    // {
+    //
+    //     bool isErasuresCreated = CreateErasureFiles(GetBlockPosFilename(positionForErasures, "blk"));
+    //     if(isErasuresCreated)
+    //     {
+    //         std::cout<<"Erasures Created";
+    //     }
+    //     else
+    //     {
+    //         std::cout<<"Erasures not created";
+    //     }
+    // }
 
     return true;
 }
@@ -1206,8 +1207,8 @@ bool CreateErasureFiles(boost::filesystem::path path)
         char* fileNameToPass = &fileName[0u];
         std::string filePath = path.parent_path().string();
         char* filePathToPass = &filePath[0u];
-        unsigned int k = 3;
-        unsigned int m = 2;
+        unsigned int k = 11;
+        unsigned int m = 8;
         char* codingType = "reed_sol_van";
         unsigned int w = 8;
         unsigned int packetsize = 0;
