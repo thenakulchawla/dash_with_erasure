@@ -28,6 +28,7 @@ LIBBITCOIN_UTIL=libbitcoin_util.a
 LIBBITCOIN_CRYPTO=crypto/libbitcoin_crypto.a
 LIBBITCOINQT=qt/libbitcoinqt.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
+LIBBITCOIN_RAPTOR=libbitcoin_raptor.a
 
 $(LIBSECP256K1): $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
@@ -47,6 +48,10 @@ EXTRA_LIBRARIES += libbitcoin_wallet.a
 endif
 if ENABLE_ZMQ
 EXTRA_LIBRARIES += libbitcoin_zmq.a
+endif
+
+if ENABLE_SHARD
+EXTRA_LIBRARIES += libbitcoin_raptor.a
 endif
 
 if BUILD_BITCOIN_LIBS
@@ -341,6 +346,23 @@ libbitcoin_wallet_a_SOURCES = \
   policy/rbf.cpp \
   $(BITCOIN_CORE_H)
 
+# sharding enabled ENABLE_SHARD is 1, raptor used here
+libbitcoin_raptor_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+libbitcoin_raptor_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libbitcoin_raptor_a_SOURCES = \
+  # keepass.cpp \
+  # privatesend-client.cpp \
+  # privatesend-util.cpp \
+  # wallet/crypter.cpp \
+  # wallet/db.cpp \
+  # wallet/rpcdump.cpp \
+  # wallet/rpcwallet.cpp \
+  # wallet/wallet.cpp \
+  # wallet/wallet_ismine.cpp \
+  # wallet/walletdb.cpp \
+  # policy/rbf.cpp \
+  $(BITCOIN_CORE_H)
+
 # crypto primitives library
 crypto_libbitcoin_crypto_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_CONFIG_INCLUDES) $(PIC_FLAGS)
 crypto_libbitcoin_crypto_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS) $(PIC_FLAGS)
@@ -482,6 +504,10 @@ endif
 
 if ENABLE_WALLET
 dashd_LDADD += libbitcoin_wallet.a
+endif
+
+if ENABLE_SHARD
+dashd_LDADD += libbitcoin_shard.a
 endif
 
 dashd_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)
